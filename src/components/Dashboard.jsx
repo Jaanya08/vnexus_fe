@@ -170,8 +170,8 @@ const Dashboard = () => {
         <aside className="sidebar">
           {/* Profile Card */}
           <div className="profile-card">
-            <div className="profile-image">AR</div>
-            <div className="profile-name">Arjun Reddy</div>
+            <div className="profile-image">JB</div>
+            <div className="profile-name">Jaanya Bagdi</div>
             <div className="profile-school">School of Computer Science</div>
           </div>
 
@@ -215,7 +215,7 @@ const Dashboard = () => {
           {/* Header with Search and Filter */}
           <div className="header">
             <div className="search-wrapper">
-              <span className="search-icon">🔍</span>
+              {/* <span className="search-icon">🔍</span> */}
               <input 
                 type="text" 
                 className="search-input" 
@@ -232,7 +232,7 @@ const Dashboard = () => {
                   setDropdownOpen(!dropdownOpen);
                 }}
               >
-                <span>⚙️</span>
+                {/* <span>⚙️</span> */}
                 <span>Sort</span>
               </button>
               <div className={`filter-dropdown ${dropdownOpen ? 'active' : ''}`}>
@@ -289,9 +289,9 @@ const Dashboard = () => {
                     <div>
                       <div className="project-title">{project.title}</div>
                       <div className="project-type">
-                        {project.type === 'research' ? '📄 Research Paper' : 
-                         project.type === 'patent' ? '💡 Patent' : 
-                         '🎓 Workshop'}
+                        {project.type === 'research' ? 'Research Paper' : 
+                         project.type === 'patent' ? 'Patent' : 
+                         'Workshop'}
                       </div>
                     </div>
                   </div>

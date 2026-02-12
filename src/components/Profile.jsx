@@ -4,12 +4,12 @@ import './Profile.css';
 const Profile = ({ onBack }) => {
   // State for profile data
   const [profileData, setProfileData] = useState({
-    name: 'Arjun Reddy',
-    registrationNumber: '21BCE1234',
+    name: 'Jaanya Bagdi',
+    registrationNumber: '24BKT0029',
     course: 'B.Tech Computer Science',
     school: 'School of Computer Science and Engineering',
-    email: 'arjun.reddy2021@vitstudent.ac.in',
-    phone: '+91 98765 43210',
+    email: 'jaanya.bagdi2024@vitstudent.ac.in',
+    phone: '+91 7869511627',
     profilePicture: null
   });
 
