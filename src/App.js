@@ -22,11 +22,12 @@ import Login from './components/Login';
 import Dashboard from './components/Dashboard';
 import Profile from './components/Profile';
 import Home from './components/Home';
+import Signup from './components/signup';
 
 function App() {
   return (
     <div className="App">
-      <Home />
+      <Login />
     </div>
   );
 }
