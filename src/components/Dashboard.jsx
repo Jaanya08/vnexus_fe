@@ -251,7 +251,7 @@ const Dashboard = ({ onNavigateToProfile, profileData }) => {
           {/* Header with Search and Filter */}
           <div className="header">
             <div className="search-wrapper">
-              <span className="search-icon">🔍</span>
+              {/* <span className="search-icon">🔍</span> */}
               <input 
                 type="text" 
                 className="search-input" 
@@ -268,7 +268,7 @@ const Dashboard = ({ onNavigateToProfile, profileData }) => {
                   setDropdownOpen(!dropdownOpen);
                 }}
               >
-                <span>⚙️</span>
+                {/* <span>⚙️</span> */}
                 <span>Sort</span>
               </button>
               <div className={`filter-dropdown ${dropdownOpen ? 'active' : ''}`}>
@@ -325,9 +325,9 @@ const Dashboard = ({ onNavigateToProfile, profileData }) => {
                     <div>
                       <div className="project-title">{project.title}</div>
                       <div className="project-type">
-                        {project.type === 'research' ? '📄 Research Paper' : 
-                         project.type === 'patent' ? '💡 Patent' : 
-                         '🎓 Workshop'}
+                        {project.type === 'research' ? 'Research Paper' : 
+                         project.type === 'patent' ? 'Patent' : 
+                         'Workshop'}
                       </div>
                     </div>
                   </div>
