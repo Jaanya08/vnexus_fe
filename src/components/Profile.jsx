@@ -1,22 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './Profile.css';
 
-const Profile = ({ onBack }) => {
-  // State for profile data
-  const [profileData, setProfileData] = useState({
-    name: 'Jaanya Bagdi',
-    registrationNumber: '24BKT0029',
-    course: 'B.Tech Computer Science',
-    school: 'School of Computer Science and Engineering',
-    email: 'jaanya.bagdi2024@vitstudent.ac.in',
-    phone: '+91 7869511627',
-    profilePicture: null
-  });
-
+const Profile = ({ onBack, profileData, onSaveProfile }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [tempData, setTempData] = useState({ ...profileData });
-  const [imagePreview, setImagePreview] = useState(null);
+  const [imagePreview, setImagePreview] = useState(profileData.profilePicture);
   const [saveSuccess, setSaveSuccess] = useState(false);
+
+  // Update tempData when profileData changes
+  useEffect(() => {
+    setTempData({ ...profileData });
+    setImagePreview(profileData.profilePicture);
+  }, [profileData]);
 
   // Handle input changes
   const handleChange = (field, value) => {
@@ -44,7 +39,7 @@ const Profile = ({ onBack }) => {
 
   // Handle save
   const handleSave = () => {
-    setProfileData({ ...tempData });
+    onSaveProfile(tempData); // Update parent state
     setIsEditing(false);
     setSaveSuccess(true);
     setTimeout(() => setSaveSuccess(false), 3000);
@@ -140,7 +135,6 @@ const Profile = ({ onBack }) => {
               {/* Full Name */}
               <div className="form-group full-width">
                 <label className="form-label">
-                  {/* <span className="label-icon">👤</span> */}
                   Full Name
                 </label>
                 <input
@@ -156,7 +150,6 @@ const Profile = ({ onBack }) => {
               {/* Registration Number */}
               <div className="form-group">
                 <label className="form-label">
-                  {/* <span className="label-icon">🎓</span> */}
                   Registration Number
                 </label>
                 <input
@@ -172,7 +165,6 @@ const Profile = ({ onBack }) => {
               {/* Email */}
               <div className="form-group">
                 <label className="form-label">
-                  {/* <span className="label-icon">📧</span> */}
                   Email Address
                 </label>
                 <input
@@ -188,7 +180,6 @@ const Profile = ({ onBack }) => {
               {/* Course/Branch */}
               <div className="form-group">
                 <label className="form-label">
-                  {/* <span className="label-icon">📚</span> */}
                   Course / Branch
                 </label>
                 <input
@@ -204,7 +195,6 @@ const Profile = ({ onBack }) => {
               {/* Phone */}
               <div className="form-group">
                 <label className="form-label">
-                  {/* <span className="label-icon">📱</span> */}
                   Phone Number
                 </label>
                 <input
@@ -220,7 +210,6 @@ const Profile = ({ onBack }) => {
               {/* School Name */}
               <div className="form-group full-width">
                 <label className="form-label">
-                  {/* <span className="label-icon">🏛️</span> */}
                   School Name
                 </label>
                 <input
@@ -260,15 +249,6 @@ const Profile = ({ onBack }) => {
             </div>
           </div>
         </div>
-
-        {/* Info Card
-        <div className="info-card">
-          <div className="info-icon">💡</div>
-          <div className="info-content">
-            <h4>Keep Your Profile Updated</h4>
-            <p>Make sure your information is accurate so professors can reach you for project opportunities and collaborations.</p>
-          </div>
-        </div> */}
       </div>
     </div>
   );

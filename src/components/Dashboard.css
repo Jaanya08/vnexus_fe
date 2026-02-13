@@ -121,6 +121,35 @@
   color: var(--coffee);
   font-size: 0.9rem;
   animation: fadeIn 0.8s ease-out 0.6s both;
+  margin-bottom: 1rem;
+}
+
+/* View Profile Button */
+.view-profile-btn {
+  width: 100%;
+  margin-top: 1rem;
+  padding: 0.75rem 1.5rem;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 600;
+  font-family: 'DM Sans', sans-serif;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(166, 124, 82, 0.3);
+  animation: fadeIn 0.8s ease-out 0.8s both;
+}
+
+.view-profile-btn:hover {
+  background: var(--coffee-dark);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(166, 124, 82, 0.4);
+}
+
+.view-profile-btn:active {
+  transform: translateY(0);
 }
 
 /* Filter Section */

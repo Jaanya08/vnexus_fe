@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './Dashboard.css';
-import './Login.jsx'
 
-const Dashboard = () => {
+const Dashboard = ({ onNavigateToProfile, profileData }) => {
   // Sample project data
   const projectsData = [
     {
@@ -94,6 +93,16 @@ const Dashboard = () => {
   const [expandedCardId, setExpandedCardId] = useState(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
+  // Get initials for avatar
+  const getInitials = (name) => {
+    return name
+      .split(' ')
+      .map(n => n[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
   // Filter and sort projects
   const getFilteredProjects = () => {
     let filtered = projectsData.filter(project => {
@@ -170,9 +179,36 @@ const Dashboard = () => {
         <aside className="sidebar">
           {/* Profile Card */}
           <div className="profile-card">
-            <div className="profile-image">JB</div>
-            <div className="profile-name">Jaanya Bagdi</div>
-            <div className="profile-school">School of Computer Science</div>
+            {profileData.profilePicture ? (
+              <img 
+                src={profileData.profilePicture} 
+                alt="Profile" 
+                className="profile-image"
+                style={{
+                  width: '100px',
+                  height: '100px',
+                  borderRadius: '50%',
+                  objectFit: 'cover',
+                  margin: '0 auto 1rem',
+                  display: 'block',
+                  border: '4px solid var(--cream-dark)',
+                  boxShadow: '0 5px 15px var(--shadow)',
+                  animation: 'fadeIn 0.8s ease-out 0.2s both'
+                }}
+              />
+            ) : (
+              <div className="profile-image">{getInitials(profileData.name)}</div>
+            )}
+            <div className="profile-name">{profileData.name}</div>
+            <div className="profile-school">{profileData.school}</div>
+            
+            {/* View Profile Button */}
+            <button 
+              className="view-profile-btn"
+              onClick={onNavigateToProfile}
+            >
+              View Profile
+            </button>
           </div>
 
           {/* Filter Section */}
@@ -215,7 +251,7 @@ const Dashboard = () => {
           {/* Header with Search and Filter */}
           <div className="header">
             <div className="search-wrapper">
-              {/* <span className="search-icon">🔍</span> */}
+              <span className="search-icon">🔍</span>
               <input 
                 type="text" 
                 className="search-input" 
@@ -232,7 +268,7 @@ const Dashboard = () => {
                   setDropdownOpen(!dropdownOpen);
                 }}
               >
-                {/* <span>⚙️</span> */}
+                <span>⚙️</span>
                 <span>Sort</span>
               </button>
               <div className={`filter-dropdown ${dropdownOpen ? 'active' : ''}`}>
@@ -289,9 +325,9 @@ const Dashboard = () => {
                     <div>
                       <div className="project-title">{project.title}</div>
                       <div className="project-type">
-                        {project.type === 'research' ? 'Research Paper' : 
-                         project.type === 'patent' ? 'Patent' : 
-                         'Workshop'}
+                        {project.type === 'research' ? '📄 Research Paper' : 
+                         project.type === 'patent' ? '💡 Patent' : 
+                         '🎓 Workshop'}
                       </div>
                     </div>
                   </div>
