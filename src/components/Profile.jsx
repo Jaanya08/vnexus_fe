@@ -38,13 +38,16 @@ const Profile = ({ onBack, profileData, onSaveProfile }) => {
   };
 
   // Handle save
-  const handleSave = () => {
-    onSaveProfile(tempData); // Update parent state
-    setIsEditing(false);
-    setSaveSuccess(true);
-    setTimeout(() => setSaveSuccess(false), 3000);
-    // Here you would typically make an API call to save the data
-    console.log('Saving profile data:', tempData);
+  const handleSave = async () => {
+    try {
+      await onSaveProfile(tempData); // Update parent state via API call
+      setIsEditing(false);
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 3000);
+      console.log('Saved profile data:', tempData);
+    } catch (err) {
+      alert("Failed to save profile: " + err.message);
+    }
   };
 
   // Handle cancel

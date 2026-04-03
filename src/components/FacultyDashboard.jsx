@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { apiFetch } from '../App';
 
 const dashboardStyles = `
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=DM+Sans:wght@400;500;600&display=swap');
@@ -217,6 +218,8 @@ body { font-family: 'DM Sans', sans-serif; }
   display: flex;
   gap: 1rem; align-items: center;
   animation: fadeIn 0.8s ease-out 0.4s both;
+  position: relative;
+  z-index: 10;
 }
 
 /* Shorter search */
@@ -509,36 +512,27 @@ const EMPTY_FORM = {
   slots: '', deadline: '', requirements: '',
 };
 
-const FacultyDashboard = ({ onNavigateToProfile, profileData }) => {
-  const [posts, setPosts] = useState([
-    {
-      id: 1, title: "Machine Learning for Climate Prediction",
-      type: "research",
-      shortDesc: "Seeking 2 motivated students to work on climate ML models using deep learning architectures.",
-      fullDesc: "This research focuses on developing novel ML models to analyze historical climate data and predict future weather patterns. Students will work with large datasets, implement deep learning architectures, and validate models against real-world scenarios.",
-      slots: 2, deadline: "March 15, 2026",
-      requirements: "Strong Python skills, familiarity with PyTorch or TensorFlow preferred.",
-      requests: 5, date: new Date('2026-02-10'),
-    },
-    {
-      id: 2, title: "AI-Powered Healthcare Diagnostics",
-      type: "patent",
-      shortDesc: "Patent development for computer vision-based early disease detection system.",
-      fullDesc: "An innovative patent focusing on computer vision techniques for medical image analysis. Looking for a collaborator to refine the patent claims and experimental results.",
-      slots: 1, deadline: "April 1, 2026",
-      requirements: "Background in computer vision, medical imaging knowledge is a plus.",
-      requests: 3, date: new Date('2026-02-12'),
-    },
-    {
-      id: 3, title: "Web3 and Blockchain Security Workshop",
-      type: "workshop",
-      shortDesc: "Conducting a two-week hands-on workshop on smart contract security and DApp development.",
-      fullDesc: "A comprehensive workshop covering blockchain technology, smart contract development on Ethereum, and security best practices. Open to all students — no prior blockchain experience required.",
-      slots: 20, deadline: null,
-      requirements: "Basic programming knowledge. Laptop required.",
-      requests: 12, date: new Date('2026-02-13'),
-    },
-  ]);
+const FacultyDashboard = ({ onNavigateToProfile, profileData, onLogout }) => {
+  const [posts, setPosts] = useState([]);
+  const [receivedRequests, setReceivedRequests] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch posts and received requests
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const fetchedPosts = await apiFetch('/posts');
+        const reqs = await apiFetch('/requests/received');
+        setPosts(fetchedPosts);
+        setReceivedRequests(reqs);
+      } catch (err) {
+        console.error("Failed to load faculty data", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
 
   const [expandedId, setExpandedId] = useState(null);
   const [showModal, setShowModal] = useState(false);
@@ -548,6 +542,10 @@ const FacultyDashboard = ({ onNavigateToProfile, profileData }) => {
   const [selectedCategories, setSelectedCategories] = useState(['research', 'patent', 'workshop']);
   const [sortBy, setSortBy] = useState('latest');
   const [dropdownOpen, setDropdownOpen] = useState(false);
+
+  // View requests modal state
+  const [showRequestsModal, setShowRequestsModal] = useState(false);
+  const [activeRequestsPost, setActiveRequestsPost] = useState(null);
 
   const openAddModal = () => { setEditPost(null); setForm(EMPTY_FORM); setShowModal(true); };
   const openEditModal = (post, e) => {
@@ -564,28 +562,52 @@ const FacultyDashboard = ({ onNavigateToProfile, profileData }) => {
 
   const handleFormChange = (field, value) => setForm(f => ({ ...f, [field]: value }));
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.title || !form.shortDesc) { alert("Please fill in at least the title and description."); return; }
-    if (editPost) {
-      setPosts(prev => prev.map(p => p.id === editPost.id
-        ? { ...p, ...form, slots: Number(form.slots) || 0, deadline: form.deadline || null }
-        : p
-      ));
-    } else {
-      setPosts(prev => [{
-        id: Date.now(), ...form,
-        slots: Number(form.slots) || 0,
-        deadline: form.deadline || null,
-        requests: 0, date: new Date(),
-      }, ...prev]);
+    
+    try {
+      if (editPost) {
+        const updated = await apiFetch(`/posts/${editPost._id}`, {
+          method: 'PUT',
+          body: JSON.stringify({ ...form, slots: Number(form.slots) || 0, deadline: form.deadline || null })
+        });
+        setPosts(prev => prev.map(p => p._id === editPost._id ? updated : p));
+      } else {
+        const created = await apiFetch('/posts', {
+          method: 'POST',
+          body: JSON.stringify({ ...form, slots: Number(form.slots) || 0, deadline: form.deadline || null })
+        });
+        setPosts(prev => [created, ...prev]);
+      }
+      closeModal();
+    } catch (err) {
+      alert(err.message);
     }
-    closeModal();
   };
 
-  const handleDelete = (id, e) => {
+  const handleDelete = async (id, e) => {
     e.stopPropagation();
-    if (window.confirm("Delete this post?")) setPosts(prev => prev.filter(p => p.id !== id));
+    if (window.confirm("Delete this post?")) {
+      try {
+        await apiFetch(`/posts/${id}`, { method: 'DELETE' });
+        setPosts(prev => prev.filter(p => p._id !== id));
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+  };
+
+  const handleStatusChange = async (requestId, status) => {
+    try {
+      const updatedReq = await apiFetch(`/requests/${requestId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status })
+      });
+      setReceivedRequests(prev => prev.map(r => r._id === requestId ? updatedReq : r));
+    } catch (err) {
+      alert("Failed to update status: " + err.message);
+    }
   };
 
   const handleCategoryChange = (cat) => {
@@ -684,6 +706,29 @@ const FacultyDashboard = ({ onNavigateToProfile, profileData }) => {
                 ))}
               </div>
             </div>
+
+            {/* Sign Out */}
+            <button 
+              onClick={onLogout}
+              style={{
+                width: '100%',
+                marginTop: '1.0rem',
+                background: 'transparent',
+                color: 'var(--coffee)',
+                border: '2px solid var(--coffee-light)',
+                padding: '0.75rem 1rem',
+                borderRadius: '12px',
+                cursor: 'pointer',
+                fontSize: '0.9rem',
+                fontWeight: 500,
+                fontFamily: "'DM Sans', sans-serif",
+                transition: 'all 0.2s ease',
+              }}
+              onMouseEnter={(e) => { e.target.style.borderColor = 'var(--accent)'; e.target.style.color = 'var(--accent)'; }}
+              onMouseLeave={(e) => { e.target.style.borderColor = 'var(--coffee-light)'; e.target.style.color = 'var(--coffee)'; }}
+            >
+              Sign Out
+            </button>
           </aside>
 
           {/* ── MAIN ── */}
@@ -742,9 +787,9 @@ const FacultyDashboard = ({ onNavigateToProfile, profileData }) => {
                   <div className="fac-empty-sub">Click "Add Post" to create your first opportunity.</div>
                 </div>
               ) : filteredPosts.map((post, idx) => (
-                <div key={post.id}
-                  className={`fac-post-card ${expandedId === post.id ? 'expanded' : ''}`}
-                  onClick={() => setExpandedId(expandedId === post.id ? null : post.id)}
+                <div key={post._id}
+                  className={`fac-post-card ${expandedId === post._id ? 'expanded' : ''}`}
+                  onClick={() => setExpandedId(expandedId === post._id ? null : post._id)}
                   style={{ animationDelay: `${Math.min(idx * 0.1, 0.6)}s` }}>
 
                   <div className="fac-post-top">
@@ -756,7 +801,7 @@ const FacultyDashboard = ({ onNavigateToProfile, profileData }) => {
                       <button className="fac-action-btn" title="Edit"
                         onClick={e => openEditModal(post, e)}>✏️</button>
                       <button className="fac-action-btn delete" title="Delete"
-                        onClick={e => handleDelete(post.id, e)}>🗑️</button>
+                        onClick={e => handleDelete(post._id, e)}>🗑️</button>
                     </div>
                   </div>
 
@@ -783,9 +828,40 @@ const FacultyDashboard = ({ onNavigateToProfile, profileData }) => {
                         <span className="fac-deadline-chip">{post.deadline}</span>
                       </div>
                     )}
-                    <span className="fac-requests-badge">
-                      👥 {post.requests} student request{post.requests !== 1 ? 's' : ''} received
-                    </span>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '16px' }}>
+                      <button
+                        className="fac-requests-badge"
+                        style={{
+                          background: post.requests > 0 ? 'var(--coffee)' : 'var(--cream)',
+                          color: post.requests > 0 ? 'white' : 'var(--coffee)',
+                          border: post.requests > 0 ? 'none' : '1px solid var(--coffee-light)',
+                          padding: '6px 12px',
+                          borderRadius: '8px',
+                          fontSize: '12px',
+                          cursor: post.requests > 0 ? 'pointer' : 'default',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          transition: 'all 0.2s ease',
+                          opacity: post.requests === 0 ? 0.7 : 1
+                        }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (post.requests > 0) {
+                            setActiveRequestsPost(post);
+                            setShowRequestsModal(true);
+                          }
+                        }}
+                        onMouseEnter={(e) => {
+                          if (post.requests > 0) e.target.style.background = 'var(--coffee-dark)';
+                        }}
+                        onMouseLeave={(e) => {
+                          if (post.requests > 0) e.target.style.background = 'var(--coffee)';
+                        }}
+                      >
+                        👥 {post.requests} student request{post.requests !== 1 ? 's' : ''} received
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -861,6 +937,62 @@ const FacultyDashboard = ({ onNavigateToProfile, profileData }) => {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        )}
+        {/* ── View Requests Modal ── */}
+        {showRequestsModal && activeRequestsPost && (
+          <div className="modal-backdrop" onClick={() => setShowRequestsModal(false)}>
+            <div className="modal-card" onClick={e => e.stopPropagation()} style={{ maxWidth: '600px' }}>
+              <h2 className="modal-heading">Requests for "{activeRequestsPost.title}"</h2>
+              <div className="modal-divider" />
+              <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
+                {receivedRequests.filter(r => r.post._id === activeRequestsPost._id || r.post === activeRequestsPost._id).length === 0 ? (
+                  <p style={{ color: 'var(--ink-soft)' }}>No requests received yet.</p>
+                ) : (
+                  receivedRequests
+                    .filter(r => r.post._id === activeRequestsPost._id || r.post === activeRequestsPost._id)
+                    .map(req => (
+                      <div key={req._id} style={{ 
+                        padding: '16px', background: 'var(--cream)', borderRadius: '12px', 
+                        marginBottom: '12px', border: '1px solid var(--border)' 
+                      }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                          <div>
+                            <strong style={{ fontSize: '15px', color: 'var(--ink)' }}>{req.student.name}</strong>
+                            <div style={{ fontSize: '13px', color: 'var(--ink-soft)', marginTop: '4px' }}>
+                              Email: {req.student.email}
+                            </div>
+                            <div style={{ fontSize: '13px', color: 'var(--ink-soft)' }}>
+                              Course: {req.student.course} | Reg No: {req.student.registrationNumber}
+                            </div>
+                            <div style={{ marginTop: '8px', fontSize: '13px', fontWeight: 600 }}>
+                              Status: <span style={{ 
+                                color: req.status === 'approved' ? '#4CAF50' : req.status === 'rejected' ? '#F44336' : '#FF9800',
+                                textTransform: 'uppercase'
+                              }}>{req.status}</span>
+                            </div>
+                          </div>
+                          {req.status === 'pending' && (
+                            <div style={{ display: 'flex', gap: '8px' }}>
+                              <button onClick={() => handleStatusChange(req._id, 'approved')}
+                                style={{ background: '#4CAF50', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer' }}>
+                                Approve
+                              </button>
+                              <button onClick={() => handleStatusChange(req._id, 'rejected')}
+                                style={{ background: '#F44336', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer' }}>
+                                Reject
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))
+                )}
+              </div>
+              <div className="modal-actions" style={{ marginTop: '20px' }}>
+                <button type="button" className="modal-cancel" onClick={() => setShowRequestsModal(false)}>Close</button>
+              </div>
             </div>
           </div>
         )}

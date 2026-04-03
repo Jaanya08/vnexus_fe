@@ -38,12 +38,16 @@ const FacProfile = ({ onBack, profileData, onSaveProfile }) => {
   };
 
   // Handle save
-  const handleSave = () => {
-    onSaveProfile(tempData); // Update parent state
-    setIsEditing(false);
-    setSaveSuccess(true);
-    setTimeout(() => setSaveSuccess(false), 3000);
-    console.log('Saving profile data:', tempData);
+  const handleSave = async () => {
+    try {
+      await onSaveProfile(tempData); // Update parent state via API
+      setIsEditing(false);
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 3000);
+      console.log('Saved profile data:', tempData);
+    } catch (err) {
+      alert("Failed to save profile: " + err.message);
+    }
   };
 
   // Handle cancel

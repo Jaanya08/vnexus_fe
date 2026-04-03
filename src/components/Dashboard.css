@@ -246,6 +246,8 @@
   gap: 1rem;
   align-items: center;
   animation: fadeIn 0.8s ease-out 0.4s both;
+  position: relative;
+  z-index: 10;
 }
 
 .search-wrapper {
@@ -353,9 +355,9 @@
 .projects-container {
   display: grid;
   gap: 1.5rem;
-  max-height: calc(100vh - 250px);
+  max-height: calc(102vh - 200px);
   overflow-y: auto;
-  padding-right: 0.5rem;
+  padding-right: 0.5 rem;
 }
 
 .projects-container::-webkit-scrollbar {

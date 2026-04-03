@@ -1,90 +1,28 @@
 import React, { useState, useEffect } from 'react';
 import './Dashboard.css';
+import { apiFetch } from '../App';
 
-const Dashboard = ({ onNavigateToProfile, profileData }) => {
-  // Sample project data
-  const projectsData = [
-    {
-      id: 1,
-      title: "Machine Learning for Climate Prediction",
-      description: "Exploring advanced ML algorithms to predict climate patterns and extreme weather events.",
-      type: "research",
-      professor: "Dr. Priya Sharma",
-      deadline: "March 15, 2026",
-      detailedDescription: "This research focuses on developing novel machine learning models to analyze historical climate data and predict future weather patterns with higher accuracy. The project involves working with large datasets, implementing deep learning architectures, and validating models against real-world scenarios.",
-      date: new Date('2026-02-10')
-    },
-    {
-      id: 2,
-      title: "AI-Powered Healthcare Diagnostics",
-      description: "Developing an intelligent system for early disease detection using computer vision.",
-      type: "patent",
-      professor: "Dr. Rajesh Kumar",
-      deadline: "April 1, 2026",
-      detailedDescription: "An innovative patent application focusing on computer vision techniques for medical image analysis. This project aims to create a system that can identify early signs of various diseases from medical imaging, potentially revolutionizing diagnostic procedures in healthcare facilities.",
-      date: new Date('2026-02-12')
-    },
-    {
-      id: 3,
-      title: "Web3 and Blockchain Security Workshop",
-      description: "Hands-on workshop covering smart contract development and security auditing.",
-      type: "workshop",
-      professor: "Prof. Amit Patel",
-      deadline: null,
-      detailedDescription: "A comprehensive two-week workshop designed to introduce students to blockchain technology, smart contract development on Ethereum, and security best practices. Participants will learn about common vulnerabilities, auditing techniques, and build real-world decentralized applications.",
-      date: new Date('2026-02-13')
-    },
-    {
-      id: 4,
-      title: "Quantum Computing Algorithms Research",
-      description: "Investigating quantum algorithms for optimization problems in logistics.",
-      type: "research",
-      professor: "Dr. Sanjay Mehta",
-      deadline: "March 30, 2026",
-      detailedDescription: "This research explores the application of quantum computing algorithms to solve complex optimization problems in supply chain and logistics. The project involves understanding quantum mechanics principles, implementing quantum circuits, and comparing results with classical algorithms.",
-      date: new Date('2026-02-08')
-    },
-    {
-      id: 5,
-      title: "Sustainable Energy Management System",
-      description: "IoT-based system for monitoring and optimizing energy consumption in buildings.",
-      type: "patent",
-      professor: "Dr. Kavita Desai",
-      deadline: "April 15, 2026",
-      detailedDescription: "A patent application for an innovative IoT-based energy management system that uses sensor networks and AI algorithms to optimize energy consumption in commercial and residential buildings. The system includes real-time monitoring, predictive analytics, and automated control mechanisms.",
-      date: new Date('2026-02-11')
-    },
-    {
-      id: 6,
-      title: "Data Science in Finance Workshop",
-      description: "Learn statistical modeling and machine learning for financial market analysis.",
-      type: "workshop",
-      professor: "Prof. Vikram Singh",
-      deadline: null,
-      detailedDescription: "An intensive workshop covering data science techniques specifically tailored for financial applications. Topics include time series analysis, risk modeling, portfolio optimization, and algorithmic trading strategies using Python and R.",
-      date: new Date('2026-02-09')
-    },
-    {
-      id: 7,
-      title: "Natural Language Processing for Regional Languages",
-      description: "Building NLP models to process and understand Indian regional languages.",
-      type: "research",
-      professor: "Dr. Anjali Verma",
-      deadline: "March 20, 2026",
-      detailedDescription: "This research project aims to develop state-of-the-art NLP models for processing Indian regional languages like Tamil, Telugu, and Hindi. The work involves creating training datasets, fine-tuning transformer models, and building applications for translation and sentiment analysis.",
-      date: new Date('2026-02-07')
-    },
-    {
-      id: 8,
-      title: "Augmented Reality in Education",
-      description: "Creating AR applications to enhance interactive learning experiences.",
-      type: "patent",
-      professor: "Dr. Ramesh Iyer",
-      deadline: "April 5, 2026",
-      detailedDescription: "A patent proposal for an augmented reality platform designed specifically for educational purposes. The system will enable students to interact with 3D models, conduct virtual experiments, and experience immersive learning scenarios across various subjects.",
-      date: new Date('2026-02-13')
-    }
-  ];
+const Dashboard = ({ onNavigateToProfile, profileData, onLogout }) => {
+  const [projectsData, setProjectsData] = useState([]);
+  const [sentRequests, setSentRequests] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch posts and user's sent requests on mount
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const posts = await apiFetch('/posts');
+        const requests = await apiFetch('/requests/sent');
+        setProjectsData(posts);
+        setSentRequests(requests);
+      } catch (err) {
+        console.error("Failed to load data", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
 
   // State management
   const [currentSort, setCurrentSort] = useState('latest');
@@ -95,6 +33,7 @@ const Dashboard = ({ onNavigateToProfile, profileData }) => {
 
   // Get initials for avatar
   const getInitials = (name) => {
+    if (!name) return "";
     return name
       .split(' ')
       .map(n => n[0])
@@ -111,7 +50,8 @@ const Dashboard = ({ onNavigateToProfile, profileData }) => {
 
       // Filter by search
       if (searchQuery) {
-        const searchText = `${project.title} ${project.description} ${project.professor}`.toLowerCase();
+        const professorName = project.faculty?.name || "";
+        const searchText = `${project.title} ${project.shortDesc} ${professorName}`.toLowerCase();
         if (!searchText.includes(searchQuery.toLowerCase())) return false;
       }
 
@@ -121,10 +61,10 @@ const Dashboard = ({ onNavigateToProfile, profileData }) => {
     // Sort
     switch (currentSort) {
       case 'latest':
-        filtered.sort((a, b) => b.date - a.date);
+        filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
         break;
       case 'oldest':
-        filtered.sort((a, b) => a.date - b.date);
+        filtered.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
         break;
       case 'alphabetical':
         filtered.sort((a, b) => a.title.localeCompare(b.title));
@@ -148,10 +88,22 @@ const Dashboard = ({ onNavigateToProfile, profileData }) => {
   };
 
   // Handle request button
-  const handleRequest = (projectId, event) => {
+  const handleRequest = async (projectId, event) => {
     event.stopPropagation();
-    const project = projectsData.find(p => p.id === projectId);
-    alert(`Request sent to ${project.professor} for "${project.title}"!\n\nYou will be notified once the professor reviews your request.`);
+    try {
+      const newRequest = await apiFetch('/requests', {
+        method: 'POST',
+        body: JSON.stringify({ postId: projectId })
+      });
+      setSentRequests(prev => [newRequest, ...prev]);
+      alert("Request sent successfully! You will be notified once the professor reviews your request.");
+    } catch (err) {
+      alert("Failed to send request: " + err.message);
+    }
+  };
+
+  const getRequestStatus = (postId) => {
+    return sentRequests.find(req => req.post?._id === postId || req.post === postId);
   };
 
   // Close dropdown when clicking outside
@@ -180,9 +132,9 @@ const Dashboard = ({ onNavigateToProfile, profileData }) => {
           {/* Profile Card */}
           <div className="profile-card">
             {profileData.profilePicture ? (
-              <img 
-                src={profileData.profilePicture} 
-                alt="Profile" 
+              <img
+                src={profileData.profilePicture}
+                alt="Profile"
                 className="profile-image"
                 style={{
                   width: '100px',
@@ -201,9 +153,9 @@ const Dashboard = ({ onNavigateToProfile, profileData }) => {
             )}
             <div className="profile-name">{profileData.name}</div>
             <div className="profile-school">{profileData.school}</div>
-            
+
             {/* View Profile Button */}
-            <button 
+            <button
               className="view-profile-btn"
               onClick={onNavigateToProfile}
             >
@@ -216,27 +168,27 @@ const Dashboard = ({ onNavigateToProfile, profileData }) => {
             <h3 className="filter-title">Categories</h3>
             <div className="checkbox-group">
               <label className="checkbox-item">
-                <input 
-                  type="checkbox" 
-                  value="research" 
+                <input
+                  type="checkbox"
+                  value="research"
                   checked={selectedCategories.includes('research')}
                   onChange={() => handleCategoryChange('research')}
                 />
                 <span className="checkbox-label">Research Papers</span>
               </label>
               <label className="checkbox-item">
-                <input 
-                  type="checkbox" 
-                  value="patent" 
+                <input
+                  type="checkbox"
+                  value="patent"
                   checked={selectedCategories.includes('patent')}
                   onChange={() => handleCategoryChange('patent')}
                 />
                 <span className="checkbox-label">Patents</span>
               </label>
               <label className="checkbox-item">
-                <input 
-                  type="checkbox" 
-                  value="workshop" 
+                <input
+                  type="checkbox"
+                  value="workshop"
                   checked={selectedCategories.includes('workshop')}
                   onChange={() => handleCategoryChange('workshop')}
                 />
@@ -244,6 +196,30 @@ const Dashboard = ({ onNavigateToProfile, profileData }) => {
               </label>
             </div>
           </div>
+
+          {/* Sign Out */}
+          <button
+            className="view-profile-btn"
+            onClick={onLogout}
+            style={{
+              width: '100%',
+              marginTop: '1rem',
+              background: 'transparent',
+              color: '#8B735A',
+              border: '2px solid #E4DBD0',
+              padding: '0.7rem 1rem',
+              borderRadius: '12px',
+              cursor: 'pointer',
+              fontSize: '0.9rem',
+              fontWeight: 500,
+              fontFamily: "'DM Sans', sans-serif",
+              transition: 'all 0.2s ease',
+            }}
+            onMouseEnter={(e) => { e.target.style.borderColor = '#C4603A'; e.target.style.color = '#C4603A'; }}
+            onMouseLeave={(e) => { e.target.style.borderColor = '#E4DBD0'; e.target.style.color = '#8B735A'; }}
+          >
+            Sign Out
+          </button>
         </aside>
 
         {/* Main Content */}
@@ -252,16 +228,16 @@ const Dashboard = ({ onNavigateToProfile, profileData }) => {
           <div className="header">
             <div className="search-wrapper">
               {/* <span className="search-icon">🔍</span> */}
-              <input 
-                type="text" 
-                className="search-input" 
+              <input
+                type="text"
+                className="search-input"
                 placeholder="Search projects, papers, workshops..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
             <div style={{ position: 'relative' }}>
-              <button 
+              <button
                 className="filter-button"
                 onClick={(e) => {
                   e.stopPropagation();
@@ -272,7 +248,7 @@ const Dashboard = ({ onNavigateToProfile, profileData }) => {
                 <span>Sort</span>
               </button>
               <div className={`filter-dropdown ${dropdownOpen ? 'active' : ''}`}>
-                <div 
+                <div
                   className={`filter-option ${currentSort === 'latest' ? 'active' : ''}`}
                   onClick={(e) => {
                     e.stopPropagation();
@@ -282,7 +258,7 @@ const Dashboard = ({ onNavigateToProfile, profileData }) => {
                 >
                   Latest First
                 </div>
-                <div 
+                <div
                   className={`filter-option ${currentSort === 'oldest' ? 'active' : ''}`}
                   onClick={(e) => {
                     e.stopPropagation();
@@ -292,7 +268,7 @@ const Dashboard = ({ onNavigateToProfile, profileData }) => {
                 >
                   Oldest First
                 </div>
-                <div 
+                <div
                   className={`filter-option ${currentSort === 'alphabetical' ? 'active' : ''}`}
                   onClick={(e) => {
                     e.stopPropagation();
@@ -314,49 +290,91 @@ const Dashboard = ({ onNavigateToProfile, profileData }) => {
                 <div className="empty-state-text">No projects found matching your criteria</div>
               </div>
             ) : (
-              filteredProjects.map((project, index) => (
-                <div 
-                  key={project.id}
-                  className={`project-card ${expandedCardId === project.id ? 'expanded' : ''}`}
-                  onClick={() => setExpandedCardId(expandedCardId === project.id ? null : project.id)}
-                  style={{ animationDelay: `${Math.min(index * 0.1, 0.6)}s` }}
-                >
-                  <div className="project-header">
-                    <div>
-                      <div className="project-title">{project.title}</div>
-                      <div className="project-type">
-                        {project.type === 'research' ? 'Research Paper' : 
-                         project.type === 'patent' ? 'Patent' : 
-                         'Workshop'}
+              filteredProjects.map((project, index) => {
+                const reqStatus = getRequestStatus(project._id);
+                const isRequested = !!reqStatus;
+
+                return (
+                  <div
+                    key={project._id}
+                    className={`project-card ${expandedCardId === project._id ? 'expanded' : ''}`}
+                    onClick={() => setExpandedCardId(expandedCardId === project._id ? null : project._id)}
+                    style={{ animationDelay: `${Math.min(index * 0.1, 0.6)}s` }}
+                  >
+                    <div className="project-header">
+                      <div>
+                        <div className="project-title">{project.title}</div>
+                        <div className="project-type" style={{ marginBottom: '8px' }}>
+                          {project.type === 'research' ? 'Research Paper' :
+                            project.type === 'patent' ? 'Patent' :
+                              'Workshop'}
+                        </div>
+                        {isRequested && (
+                           <div style={{
+                             display: 'inline-block',
+                             padding: '2px 8px',
+                             background: 'var(--cream-dark)',
+                             border: '1px solid var(--border)',
+                             borderRadius: '12px',
+                             fontSize: '11px',
+                             fontWeight: 600,
+                             textTransform: 'uppercase',
+                             color: reqStatus.status === 'approved' ? '#4CAF50' : reqStatus.status === 'rejected' ? '#F44336' : '#FF9800',
+                             marginLeft: '8px'
+                           }}>
+                             Status: {reqStatus.status}
+                           </div>
+                        )}
                       </div>
                     </div>
-                  </div>
-                  <p className="project-description">{project.description}</p>
-                  
-                  <div className="project-meta">
-                    <div className="meta-item">
-                      <div className="meta-label">Professor</div>
-                      <div className="meta-value">{project.professor}</div>
-                    </div>
-                    <div className="meta-item">
-                      <div className="meta-label">Detailed Description</div>
-                      <div className="meta-value">{project.detailedDescription}</div>
-                    </div>
-                    {project.deadline && (
+                    <p className="project-description">{project.shortDesc}</p>
+
+                    <div className="project-meta">
                       <div className="meta-item">
-                        <div className="meta-label">Deadline</div>
-                        <div className="meta-value">{project.deadline}</div>
+                        <div className="meta-label">Professor</div>
+                        <div className="meta-value">{project.faculty?.name || 'Unknown'}</div>
                       </div>
-                    )}
-                    <button 
-                      className="request-button" 
-                      onClick={(e) => handleRequest(project.id, e)}
-                    >
-                      Send Request
-                    </button>
+                      <div className="meta-item">
+                        <div className="meta-label">Professor Email</div>
+                        <div className="meta-value">
+                          {project.faculty?.email ? (
+                            <a href={`mailto:${project.faculty.email}`} style={{ color: 'var(--accent)', textDecoration: 'none' }}>
+                              {project.faculty.email}
+                            </a>
+                          ) : 'Not available'}
+                        </div>
+                      </div>
+                      <div className="meta-item">
+                        <div className="meta-label">Detailed Description</div>
+                        <div className="meta-value">{project.fullDesc || "No additional details provided."}</div>
+                      </div>
+                      {project.requirements && (
+                        <div className="meta-item">
+                          <div className="meta-label">Requirements</div>
+                          <div className="meta-value">{project.requirements}</div>
+                        </div>
+                      )}
+                      {project.deadline && (
+                        <div className="meta-item">
+                          <div className="meta-label">Deadline</div>
+                          <div className="meta-value">{project.deadline}</div>
+                        </div>
+                      )}
+                      <button
+                        className="request-button"
+                        disabled={isRequested}
+                        onClick={(e) => handleRequest(project._id, e)}
+                        style={{
+                          opacity: isRequested ? 0.6 : 1,
+                          cursor: isRequested ? 'not-allowed' : 'pointer'
+                        }}
+                      >
+                        {isRequested ? 'Request Sent' : 'Send Request'}
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))
+                )
+              })
             )}
           </div>
         </main>
