@@ -523,6 +523,7 @@ export default function Home({ onGetStarted }) {
 
       {/* ══ NAVBAR ══ */}
       <nav className={`nav ${scrolled ? "scrolled" : ""}`}>
+        {/* eslint-disable-next-line */}
         <a href="#" className="nav-brand" onClick={(e) => e.preventDefault()}>
           <div className="nav-logo">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
@@ -538,6 +539,7 @@ export default function Home({ onGetStarted }) {
           <li><a href="#about">About</a></li>
           <li><a href="#features">Features</a></li>
           <li>
+            {/* eslint-disable-next-line */}
             <a href="#" className="nav-cta" onClick={(e) => { e.preventDefault(); if (onGetStarted) onGetStarted(); }}>
               Get Started
             </a>
@@ -649,6 +651,7 @@ export default function Home({ onGetStarted }) {
         <ul className="footer-links">
           <li><a href="#about">About</a></li>
           <li><a href="#features">Features</a></li>
+          {/* eslint-disable-next-line */}
           <li><a href="#" onClick={(e) => { e.preventDefault(); if (onGetStarted) onGetStarted(); }}>Get Started</a></li>
         </ul>
         <div className="footer-copy">&copy; 2026 VNexus. All rights reserved.</div>

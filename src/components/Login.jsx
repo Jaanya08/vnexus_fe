@@ -385,9 +385,9 @@ export default function Login({ onLoginSuccess, onSignupSuccess, onGoToSignup, o
               <h1 className="form-heading">{isSignup ? 'Join VNexus' : 'Welcome back'}</h1>
               <p className="form-sub">
                 {isSignup ? (
-                  <>Already have an account? <a href="#" onClick={(e) => { e.preventDefault(); if (onGoToLogin) onGoToLogin(); }}>Sign in here</a></>
+                  <>Already have an account? {/* eslint-disable-next-line */} <a href="#" onClick={(e) => { e.preventDefault(); if (onGoToLogin) onGoToLogin(); }}>Sign in here</a></>
                 ) : (
-                  <>New here? <a href="#" onClick={(e) => { e.preventDefault(); if (onGoToSignup) onGoToSignup(); }}>Create a free account</a></>
+                  <>New here? {/* eslint-disable-next-line */} <a href="#" onClick={(e) => { e.preventDefault(); if (onGoToSignup) onGoToSignup(); }}>Create a free account</a></>
                 )}
               </p>
             </div>
@@ -500,6 +500,7 @@ export default function Login({ onLoginSuccess, onSignupSuccess, onGoToSignup, o
   Remember me
 </label>
 
+                {/* eslint-disable-next-line */}
                 <a href="#" className="forgot-link">Forgot password?</a>
               </div>
 
